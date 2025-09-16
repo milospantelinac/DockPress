@@ -1,0 +1,45 @@
+# Dev image for local development (Xdebug, WP-CLI, MySQL client, useful tools)
+FROM wordpress:6.8.2-php8.2-fpm
+
+# Optional UID/GID mapping to match host user (prevents permission issues on bind mounts)
+ARG UID=1000
+ARG GID=1000
+
+# System dependencies + MySQL client + common utilities
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        git curl less nano vim zip unzip \
+        default-mysql-client \
+        libmagickwand-dev; \
+    rm -rf /var/lib/apt/lists/*
+
+# Xdebug for debugging in development (adjust version if needed for PHP 8.2)
+RUN set -eux; \
+    pecl install xdebug; \
+    docker-php-ext-enable xdebug; \
+    { \
+      echo "zend_extension=$(php -r 'echo ini_get(\"extension_dir\");')/xdebug.so"; \
+      echo "xdebug.mode=develop,debug"; \
+      echo "xdebug.start_with_request=yes"; \
+      echo "xdebug.discover_client_host=true"; \
+      echo "xdebug.client_port=9003"; \
+      echo "xdebug.log_level=0"; \
+    } > /usr/local/etc/php/conf.d/zz-xdebug.ini
+
+# WordPress Command Line Interface (WP-CLI)
+RUN set -eux; \
+    curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar; \
+    chmod +x /usr/local/bin/wp
+
+# Set container user to avoid root-owned files on the host
+RUN set -eux; \
+    groupmod -o -g ${GID} www-data && \
+    usermod  -o -u ${UID} -g ${GID} www-data
+
+WORKDIR /var/www/html
+USER www-data
+
+# Notes:
+# - In compose.dev.yml, mount ./docker/php.ini as /usr/local/etc/php/conf.d/zz-dev.ini (read-only).
+# - Toggle Xdebug by changing xdebug.mode or overlaying another ini file.

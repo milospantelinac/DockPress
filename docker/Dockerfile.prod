@@ -1,0 +1,44 @@
+# Production image (without Xdebug), with WP-CLI and optional Imagick support
+FROM wordpress:6.8.2-php8.2-fpm
+
+# Minimal packages + libraries for Imagick (safe and useful in WP production)
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        curl ca-certificates \
+        libmagickwand-dev; \
+    rm -rf /var/lib/apt/lists/*
+
+# WP-CLI (useful for scripts/deployment processes in CI/CD)
+RUN set -eux; \
+    curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar; \
+    chmod +x /usr/local/bin/wp
+
+# OPcache – tuned for production (can also override via mounted php.ini in compose.prod.yml)
+RUN set -eux; \
+    { \
+      echo "opcache.enable=1"; \
+      echo "opcache.enable_cli=1"; \
+      echo "opcache.validate_timestamps=0"; \
+      echo "opcache.max_accelerated_files=20000"; \
+      echo "opcache.memory_consumption=256"; \
+      echo "opcache.interned_strings_buffer=16"; \
+    } > /usr/local/etc/php/conf.d/zz-opcache.ini
+
+# Hardening: disable file editor in WP admin and enforce memory limit
+RUN set -eux; \
+    { \
+      echo "define('DISALLOW_FILE_EDIT', true);"; \
+      echo "define('WP_MEMORY_LIMIT', '256M');"; \
+    } > /usr/src/wordpress/wp-config-custom.php
+
+# Note:
+# - This does not overwrite the core wp-config.php — you can inject via WORDPRESS_CONFIG_EXTRA
+#   in compose, or copy wp-config-custom.php during CI if you want it baked-in.
+
+WORKDIR /var/www/html
+USER www-data
+
+# Notes:
+# - In compose.prod.yml, mount ./docker/php.ini as /usr/local/etc/php/conf.d/zz-prod.ini (override).
+# - Nginx/SSL/healthchecks are configured through docker-compose.

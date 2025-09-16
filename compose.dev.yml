@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.4
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+      --innodb_buffer_pool_size=512M
+      --innodb_log_file_size=256M
+      --innodb_flush_log_at_trx_commit=2
+      --sql_mode=ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306" # da ne sudara sa lokalnim MySQL-om
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  wordpress:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    environment:
+      WORDPRESS_DB_HOST: "${DB_HOST:-db}:3306"
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WP_ENV: ${WP_ENV:-development}
+      WP_DEBUG: ${WP_DEBUG:-true}
+      # OPTION: automatically add in wp-config.php (only dev)
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_REDIS_HOST', '${WP_REDIS_HOST:-redis}');
+        define('WP_MEMORY_LIMIT', '${WP_MEMORY_LIMIT:-256M}');
+    volumes:
+      - wp_core:/var/www/html
+      - ./src/wp-content:/var/www/html/wp-content
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/zz-dev.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - wp_core:/var/www/html
+      - ./src/wp-content:/var/www/html/wp-content:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - wordpress
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    environment:
+      PMA_HOST: ${DB_HOST:-db}
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+
+volumes:
+  db_data:
+  wp_core:
