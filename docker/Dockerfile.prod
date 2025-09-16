@@ -37,7 +37,7 @@ RUN set -eux; \
 #   in compose, or copy wp-config-custom.php during CI if you want it baked-in.
 
 WORKDIR /var/www/html
-USER www-data
+USER root
 
 # Notes:
 # - In compose.prod.yml, mount ./docker/php.ini as /usr/local/etc/php/conf.d/zz-prod.ini (override).

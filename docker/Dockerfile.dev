@@ -38,7 +38,7 @@ RUN set -eux; \
     usermod  -o -u ${UID} -g ${GID} www-data
 
 WORKDIR /var/www/html
-USER www-data
+USER root
 
 # Notes:
 # - In compose.dev.yml, mount ./docker/php.ini as /usr/local/etc/php/conf.d/zz-dev.ini (read-only).
