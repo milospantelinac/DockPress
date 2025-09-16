@@ -18,7 +18,7 @@
 
 ## ✨ Features
 
-- ⚡ **One command up**: `docker compose up -d`
+- ⚡ **One command up**: `docker compose -f compose.{ENV}.yml up`
 - 📝 **WP-CLI** included for easy management
 - 🐘 **PHP-FPM 8.2** with Xdebug (dev only)
 - 🗄️ **MySQL 8.4** with phpMyAdmin
@@ -108,7 +108,7 @@ dockpress/
 
 5. **Start stack**
    ```bash
-   docker compose -f compose.dev.yml up -d
+   docker compose -f compose.{ENV}.yml up -d
    ```
 
 6. **Access services**
@@ -124,7 +124,7 @@ dockpress/
 
 - **Check logs**
   ```bash
-  docker compose -f compose.dev.yml logs -f wordpress
+  docker compose -f compose.{ENV}.yml logs -f wordpress
   ```
 - **Run WP-CLI**
   ```bash
@@ -216,6 +216,6 @@ MIT — free to use, modify, and share.
 ---
 
 <p align="center">
-  Made with ❤️ by developers, for developers.  
+  Made with ❤️ by Milos Pantelinac, for developers.  
   Happy hacking! 🐳
 </p>
