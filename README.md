@@ -1,3 +1,10 @@
+<p align="center">
+  <img 
+    src="https://github.com/user-attachments/assets/1bbee46f-1ec4-4016-b3c3-41b27aa59860" 
+    alt="DockPress Logo" 
+    width="300" />
+</p>
+
 # 🚀 DockPress
 
 > 🐳 A modern **Dockerized WordPress starter kit** with Nginx, MySQL, PHP-FPM, Redis, Mailhog, phpMyAdmin, WP-CLI, and optional Xdebug.
