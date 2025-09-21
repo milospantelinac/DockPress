@@ -15,7 +15,6 @@ RUN set -eux; \
     chmod +x /usr/local/bin/wp
 
 # OPcache – tuned for production (can also override via mounted php.ini in compose.prod.yml)
-
 RUN set -eux; \
     { \
       echo "opcache.enable=1"; \
