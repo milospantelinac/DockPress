@@ -7,7 +7,6 @@
 
 # 🚀 DockPress
 
-
 > 🐳 A modern **Dockerized WordPress starter kit** with Nginx, MySQL, PHP-FPM, Redis, Mailhog, phpMyAdmin, WP-CLI, and optional Xdebug.
 
 <p align="center">
